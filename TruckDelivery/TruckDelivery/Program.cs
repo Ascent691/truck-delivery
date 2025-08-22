@@ -50,7 +50,38 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            foreach (var delivery in scenario.Deliveries)
+            {
+                var path = new List<(long, long)>();
+                var visited = new HashSet<long>();
+                var currentCity = delivery.FromCityId;
+                visited.Add(currentCity);
+
+                while (currentCity != delivery.ToCityId)
+                {
+                    var nextRoad = scenario.Roads.FirstOrDefault(r =>
+                        delivery.LoadWeight <= r.LoadLimit &&
+                        ((r.FirstCityId == currentCity && !visited.Contains(r.SecondCityId)) ||
+                         (r.SecondCityId == currentCity && !visited.Contains(r.FirstCityId)))
+                    );
+
+                    if (nextRoad == null)
+                    {
+                        Console.WriteLine($"No path from {delivery.FromCityId} to {delivery.ToCityId}");
+                        break;
+                    }
+
+                    var nextCity = nextRoad.FirstCityId == currentCity ? nextRoad.SecondCityId : nextRoad.FirstCityId;
+                    path.Add((currentCity, nextCity));
+                    visited.Add(nextCity);
+                    currentCity = nextCity;
+                }
+                Console.WriteLine(string.Join(", ", path.Select(p => $"({p.Item1},{p.Item2})")));
+            }
+
+            return new ScenarioAnswer(new long[scenario.Deliveries.Length]);
         }
+
+
     }
 }
