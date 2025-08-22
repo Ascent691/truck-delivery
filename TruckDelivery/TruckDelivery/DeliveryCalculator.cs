@@ -6,78 +6,45 @@ public class DeliveryCalculator
 {
     public static ScenarioAnswer Calculate(Scenario scenario)
     {
-        var deliveries = scenario.Deliveries;
-        var map = CreateMap(scenario.Roads);
+        var adjList = new RoadAdjacencyList(scenario.Roads);
 
         var answers = new long[scenario.Deliveries.Length];
-        var currAns = 0L;
+        var currAns = 0;
 
-        //new
-        var tollDict = new Dictionary<long, Road[]>();
-        FindTollsRecursive(1, [], []);
+        var pathMap = new Dictionary<long, Road[]>();
+        var visited = new bool[scenario.Roads.Length + 2];
 
-        void FindTollsRecursive(long node, List<Road> currTolls, HashSet<long> visited)
+        FindPathsRecursive(1, [], visited);
+
+        void FindPathsRecursive(long node, List<Road> currPath, bool[] visited)
         {
-            visited.Add(node);
+            visited[node] = true;
+            pathMap[node] = [.. currPath];
 
-            tollDict[node] = [..currTolls];
-
-            foreach (var dest in map.GetConnected(node))
+            foreach (var (dest, road) in adjList.GetConnectedNodes(node))
             {
-                if (visited.Contains(dest))
-                {
-                    continue;
-                }
+                if (visited[dest]) continue;
 
-                currTolls.Add(map.At(node, dest));
+                currPath.Add(road);
 
-                FindTollsRecursive(dest, currTolls, visited);
+                FindPathsRecursive(dest, currPath, visited);
             }
 
-            if (currTolls.Count > 0)
-                currTolls.RemoveAt(currTolls.Count - 1);
+            if (currPath.Count > 0)
+                currPath.RemoveAt(currPath.Count - 1);
         }
 
-        foreach (var (from, to, weight) in deliveries)
+        foreach (var (from, to, weight) in scenario.Deliveries)
         {
-            var tolls = tollDict[from].Select(r => weight >= r.LoadLimit ? r.TollCharge : 0);
-
-            var ans = MathHelper.GreatestCommonDivisor(tolls.ToArray());
-            answers[currAns++] = ans;
+            long divisor = 0;
+            foreach (var r in pathMap[from])
+            {
+                var toll = weight >= r.LoadLimit ? r.TollCharge : 0;
+                divisor = MathHelper.GreatestCommonDivisor(divisor, toll);
+            }
+            answers[currAns++] = divisor;
         }
 
         return new ScenarioAnswer(answers);
-
-        bool CheckConnected(long node, long target, List<long> path, HashSet<long> visited)
-        {
-            visited.Add(node);
-            path.Add(node);
-
-            if (node == target) return true;
-
-            foreach (var dest in map.GetConnected(node))
-            {
-                if (visited.Contains(dest))
-                    continue;
-
-                if (CheckConnected(dest, target, path, visited))
-                    return true;
-            }
-
-            path.RemoveAt(path.Count - 1);
-            return false;
-        }
-    }
-
-    private static RoadMatrix CreateMap(Road[] roads)
-    {
-        var map = new RoadMatrix(roads.Length + 2);
-
-        foreach (var road in roads)
-        {
-            map.AddRoad(road.FirstCityId, road.SecondCityId, road);
-        }
-
-        return map;
     }
 }
