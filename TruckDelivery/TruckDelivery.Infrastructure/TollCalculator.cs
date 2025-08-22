@@ -34,7 +34,7 @@ namespace TruckDelivery.Infrastructure
             if (!untravelledRoads.Any()) return [];
             
             return connectedRoads.SelectMany((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
-                .Where((path) => path.Any());
+                .Where((paths) => paths.Any());
         }
 
         private long GetDestination(long fromCity, Road road)
