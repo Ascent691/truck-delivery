@@ -1,8 +1,8 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using TruckDelivery.Infrastructure;
-using static TruckDelivery.Extensions;
 
 namespace TruckDelivery
 {
@@ -11,8 +11,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -53,87 +53,50 @@ namespace TruckDelivery
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
             // STEP 1: PATHFIND FROM START TO 1
-            // hasRoadBeenTraversed boolean
 
             // STEP 2: Store each paid toll
 
             // STEP 3: FIND gcd for toll charges
+            var dfs = new DFS();
+            var cityPairs = GetCityPairs(scenario);
+            var roads = scenario.Roads;
+            const int CapitalCityId = 1;
+            List<long> gcds = [];
 
-            var cities = scenario.Roads
-                .SelectMany((r) => new long[] { r.FirstCityId, r.SecondCityId })
-                .Distinct()
-                .Select((id) => new City(id))
-                .ToDictionary((city) => city.Id);
-
-            foreach (var road in scenario.Roads)
+            foreach(var delivery in scenario.Deliveries)
             {
-                var firstCity = cities[road.FirstCityId];
-                var secondCity = cities[road.SecondCityId];
+                List<long> tollsPaid = [];
+                var weight = delivery.LoadWeight;
+                var route = dfs.FindPath(delivery.FromCityId, CapitalCityId, cityPairs);
 
-                var connection = new Connection(firstCity, secondCity, road);
-                firstCity.Connections.Add(secondCity.Id, connection);
-                secondCity.Connections.Add(firstCity.Id, connection );
-            }
-            var capitalCity = cities[1];
+                if (route is null) continue;
 
-            foreach(var kvp in capitalCity.Connections)
-            {
-                var connection = kvp.Value;
-                var destinationCity = kvp.Key;
+                var roadsInRoute = route.Zip(route.Skip(1), (city1, city2) => (city1, city2));
+                var roadLookup = roads.ToDictionary(r => (r.FirstCityId, r.SecondCityId));
+                var mappedRoads = roadsInRoute
+                                    .Select(r => (roadsInRoute: r, Road: roadLookup.TryGetValue(r, out var road) ? road : null))
+                                    .ToList();
 
-                var connectedCity = connection.SecondCity != capitalCity ?
-                    connection.SecondCity :
-                    connection.FirstCity;
-
-                foreach(var kvp2 in connectedCity.Connections)
+                foreach (var mappedRoad in mappedRoads)
                 {
-                    // Looping over cities connected to cities connected that directly connect to the capital
-                    var connection2 = kvp2.Value;
-                    var nextConnectedCity = connection2.SecondCity != capitalCity ?
-                    connection2.SecondCity :
-                    connection2.FirstCity;
+                    var road = mappedRoad.Road;
+                    if (road is null) continue;
 
-                    nextConnectedCity.Connections.Add(capitalCity.Id, connection2 );
+                    if (weight >= road.LoadLimit)
+                    {
+                        tollsPaid.Add(road.TollCharge);
+                    }
                 }
+
+                gcds.Add(MathHelper.GreatestCommonDivisor([.. tollsPaid]));
             }
 
-            foreach (var delivery in scenario.Deliveries)
-            {
-                var vectors = new List<List<long>>();
-
-                var start = delivery.FromCityId;
-                var end = delivery.ToCityId; // always 1 for this scenario
-            }
-
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            return new ScenarioAnswer([.. gcds]);
         }
 
-
-        //static List<int> DFS(bool[] visited, int start, int end)
-        //{
-        //    var stack = new List<int>();
-        //    stack.Add(x);
-
-        //    if (start == end)
-        //    {
-        //        return stack;
-        //    }
-
-        //    visited[start] = true;
-
-        //}
-    }
-
-    class City(long id)
-    {
-        public long Id { get; init; } = id;
-        public Dictionary<long, Connection> Connections { get; set; } = [];
-    }
-
-    class Connection(City firstCity, City secondCity, Road road)
-    {
-        public City FirstCity { get; init; } = firstCity;
-        public City SecondCity { get; init; } = secondCity;
-        public Road Road { get; init; } = road;
+        private static List<(long, long)> GetCityPairs(Scenario scenario)
+        {
+            return scenario.Roads.Select((r) => (r.FirstCityId, r.SecondCityId)).ToList();
+        }
     }
 }
