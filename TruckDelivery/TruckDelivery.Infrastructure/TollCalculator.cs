@@ -21,21 +21,20 @@ namespace TruckDelivery.Infrastructure
     {
         public IEnumerable<Road> GetPathToHomeCity()
         {
-            return GetPath(delivery.FromCityId, 1, []);
+            return GetPossiblePaths(delivery.FromCityId, 1, []).First();
         }
 
-        private IEnumerable<Road> GetPath(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
+        private IEnumerable<IEnumerable<Road>> GetPossiblePaths(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
         {
-            if (fromCity == toCity) return travelledRoads;
+            if (fromCity == toCity) return [travelledRoads];
 
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
             var untravelledRoads = roads.Where((road) => !travelledRoads.Contains(road));
 
             if (!untravelledRoads.Any()) return [];
             
-            return connectedRoads.Select((road) => GetPath(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
-                .Where((path) => path.Any())
-                .First();
+            return connectedRoads.SelectMany((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
+                .Where((path) => path.Any());
         }
 
         private long GetDestination(long fromCity, Road road)
