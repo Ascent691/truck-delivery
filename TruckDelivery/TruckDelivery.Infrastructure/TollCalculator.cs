@@ -29,11 +29,11 @@ namespace TruckDelivery.Infrastructure
             if (fromCity == toCity) return [travelledRoads];
 
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
-            var untravelledRoads = roads.Where((road) => !travelledRoads.Contains(road));
+            var untravelledRoads = connectedRoads.Where((road) => !travelledRoads.Contains(road));
 
             if (!untravelledRoads.Any()) return [];
             
-            return connectedRoads.SelectMany((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
+            return untravelledRoads.SelectMany((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
                 .Where((paths) => paths.Any());
         }
 
