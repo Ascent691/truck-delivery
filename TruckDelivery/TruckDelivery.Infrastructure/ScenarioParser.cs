@@ -13,7 +13,7 @@
             for (int i = 0; i < results.Length; i++)
             {
                 string[] parts = lines[lineIndex++].Split(' ');
-                int numRoads = int.Parse(parts[0]);
+                int numRoads = int.Parse(parts[0]) - 1; // No idea why they made the schema N - 1
                 int numDeliveries = int.Parse(parts[1]);
                 var roads = new Road[numRoads];
 
@@ -35,17 +35,6 @@
                     int fromCityId = int.Parse(parts[0]);
                     int loadWeight = int.Parse(parts[1]);
                     deliveries[d] = new Delivery(fromCityId, 1, loadWeight);
-                }
-
-                int[,] cells = new int[numRoads, numDeliveries];
-
-                for (int k = 0; k < numRoads; k++)
-                {
-                    parts = lines[lineIndex++].Split(' ');
-                    for (int j = 0; j < numDeliveries; j++)
-                    {
-                        cells[k, j] = int.Parse(parts[j]);
-                    }
                 }
 
                 results[i] = new Scenario(roads, deliveries);
