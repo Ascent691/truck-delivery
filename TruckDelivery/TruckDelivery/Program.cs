@@ -50,7 +50,11 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            var answers = scenario.Deliveries.Select((delivery) => new TollCalculator(delivery, scenario.Roads))
+                .Select((calculator) => calculator.CalculateTolls())
+                .Select((tolls) => MathHelper.GreatestCommonDivisor(tolls.ToArray()));
+
+            return new ScenarioAnswer(answers.ToArray());
         }
     }
 }

@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TruckDelivery.Infrastructure
+{
+    public class TollCalculator(Delivery delivery, IEnumerable<Road> roads)
+    {
+        public IEnumerable<long> CalculateTolls()
+        {
+            var path = new PathFinder(delivery, roads).GetPathToHomeCity();
+
+            return path.Select((road) => delivery.LoadWeight >= road.LoadLimit ? road.TollCharge : 0)
+                .Where((toll) => toll != 0);
+        }
+    }
+
+    internal class PathFinder(Delivery delivery, IEnumerable<Road> roads)
+    {
+        public IEnumerable<Road> GetPathToHomeCity()
+        {
+            return GetPath(delivery.FromCityId, 1, []);
+        }
+
+        private IEnumerable<Road> GetPath(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
+        {
+            if (fromCity == toCity) return travelledRoads;
+
+            var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
+            var untravelledRoads = roads.Where((road) => !travelledRoads.Contains(road));
+
+            if (!untravelledRoads.Any()) return [];
+            
+            return connectedRoads.Select((road) => GetPath(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
+                .Where((path) => path.Any())
+                .First();
+        }
+
+        private long GetDestination(long fromCity, Road road)
+        {
+            return fromCity == road.FirstCityId ? road.SecondCityId : road.FirstCityId;
+        }
+    }
+}
