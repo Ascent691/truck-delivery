@@ -9,8 +9,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -27,6 +27,7 @@ namespace TruckDelivery
                 var scenario = scenarios[i];
                 var expectedAnswer = expectedAnswers[i];
                 var computedAnswer = DetermineAnswer(scenario);
+                Console.WriteLine(i);
 
                 if (!expectedAnswer.IsMatch(computedAnswer))
                 {
@@ -50,7 +51,7 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            return DeliveryCalculator.Calculate(scenario);
         }
     }
 }
