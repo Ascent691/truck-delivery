@@ -9,8 +9,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -50,9 +50,9 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            var answers = scenario.Deliveries.Select((delivery) => new TollCalculator(delivery, scenario.Roads))
-                .Select((calculator) => calculator.CalculateTolls())
-                .Select((tolls) => MathHelper.GreatestCommonDivisor(tolls.ToArray()));
+            var calculator = new TollCalculator(scenario.Deliveries, scenario.Roads);
+
+            var answers = calculator.GetTollsToHomeCity().Select((tolls) => MathHelper.GreatestCommonDivisor(tolls.ToArray()));
 
             return new ScenarioAnswer(answers.ToArray());
         }

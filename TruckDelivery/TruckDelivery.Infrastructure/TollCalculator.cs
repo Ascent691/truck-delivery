@@ -6,27 +6,29 @@ using System.Threading.Tasks;
 
 namespace TruckDelivery.Infrastructure
 {
-    public class TollCalculator(Delivery delivery, IEnumerable<Road> roads)
+    public class TollCalculator(IEnumerable<Delivery> deliveries, IEnumerable<Road> roads)
     {
-        public IEnumerable<long> CalculateTolls()
-        {
-            var path = new PathFinder(delivery, roads).GetPathToHomeCity();
+        private readonly Dictionary<long, IEnumerable<Road>> _knownPaths = [];
 
-            return path.Select((road) => delivery.LoadWeight >= road.LoadLimit ? road.TollCharge : 0)
-                .Where((toll) => toll != 0);
-        }
-    }
-
-    internal class PathFinder(Delivery delivery, IEnumerable<Road> roads)
-    {
-        public IEnumerable<Road> GetPathToHomeCity()
+        public IEnumerable<IEnumerable<long>> GetTollsToHomeCity()
         {
-            return GetPossiblePaths(delivery.FromCityId, 1, []).First();
+            return deliveries.Select((delivery) => 
+            {
+                return GetPossiblePaths(delivery.FromCityId, 1, [])
+                    .First()
+                    .Select((road) => delivery.LoadWeight >= road.LoadLimit ? road.TollCharge : 0)
+                    .Where((toll) => toll != 0);
+                }
+            );
         }
 
         private IEnumerable<IEnumerable<Road>> GetPossiblePaths(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
         {
-            if (fromCity == toCity) return [travelledRoads];
+            if (_knownPaths.TryGetValue(fromCity, out var path)) return [path];
+
+            if (fromCity == toCity) {
+                return [travelledRoads];
+            };
 
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
             var untravelledRoads = connectedRoads.Where((road) => !travelledRoads.Contains(road));
