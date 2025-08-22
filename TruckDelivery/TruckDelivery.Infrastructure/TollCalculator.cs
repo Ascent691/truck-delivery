@@ -14,8 +14,10 @@ namespace TruckDelivery.Infrastructure
         {
             return deliveries.Select((delivery) => 
             {
-                return GetPossiblePaths(delivery.FromCityId, 1, [])
-                    .First()
+                var path = GetPossiblePaths(delivery.FromCityId, 1, []).First();
+                _knownPaths.TryAdd(delivery.FromCityId, path);
+
+                return path
                     .Select((road) => delivery.LoadWeight >= road.LoadLimit ? road.TollCharge : 0)
                     .Where((toll) => toll != 0);
                 }
@@ -24,7 +26,7 @@ namespace TruckDelivery.Infrastructure
 
         private IEnumerable<IEnumerable<Road>> GetPossiblePaths(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
         {
-            if (_knownPaths.TryGetValue(fromCity, out var path)) return [path];
+            if (_knownPaths.TryGetValue(fromCity, out var path)) return [travelledRoads.Concat(path)];
 
             if (fromCity == toCity) {
                 return [travelledRoads];
