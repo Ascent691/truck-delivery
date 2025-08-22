@@ -12,19 +12,36 @@ public class DeliveryCalculator
         var answers = new long[scenario.Deliveries.Length];
         var currAns = 0L;
 
-        foreach (var (from, to, weight) in deliveries)
-        {
-            var path = new List<long>();
-            CheckConnected(from, to, path, []);
+        //new
+        var tollDict = new Dictionary<long, Road[]>();
+        FindTollsRecursive(1, [], []);
 
-            var tolls = new long[path.Count];
-            for (var i = 0; i < path.Count - 1; i++)
+        void FindTollsRecursive(long node, List<Road> currTolls, HashSet<long> visited)
+        {
+            visited.Add(node);
+
+            tollDict[node] = currTolls.ToArray();
+
+            foreach (var dest in map.GetConnected(node))
             {
-                var road = map.At(path[i], path[i + 1]);
-                tolls[i] = weight >= road.LoadLimit ? road.TollCharge : 0;
+                if (visited.Contains(dest))
+                {
+                    continue;
+                }
+
+                currTolls.Add(map.At(node, dest));
+
+                FindTollsRecursive(dest, currTolls, visited);
             }
 
-            var ans = MathHelper.GreatestCommonDivisor(tolls);
+            currTolls.RemoveAt(currTolls.Count - 1);
+        }
+
+        foreach (var (from, to, weight) in deliveries)
+        {
+            var tolls = tollDict[from].Select(r => weight >= r.LoadLimit ? r.TollCharge : 0);
+
+            var ans = MathHelper.GreatestCommonDivisor(tolls.ToArray());
             answers[currAns++] = ans;
         }
 
