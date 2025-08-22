@@ -8,10 +8,10 @@ namespace TruckDelivery.Infrastructure
 {
     public static class MathHelper
     {
-        public static int GreatestCommonDivisor(params int[] values)
+        public static long GreatestCommonDivisor(params long[] values)
         {
             if (values == null) return 0;
-            int value = values.Length;
+            long value = values.Length;
 
             if (value < 3)
             {
@@ -25,7 +25,7 @@ namespace TruckDelivery.Infrastructure
             return value;
         }
 
-        public static int GreatestCommonDivisor(int u, int v)
+        public static long GreatestCommonDivisor(long u, long v)
         {
             if (u == 0 || v == 0) return u | v;
 
@@ -46,7 +46,7 @@ namespace TruckDelivery.Infrastructure
                 if (u < v) v -= u;
                 else
                 {
-                    int diff = u - v;
+                    long diff = u - v;
                     u = v;
                     v = diff;
                 }
