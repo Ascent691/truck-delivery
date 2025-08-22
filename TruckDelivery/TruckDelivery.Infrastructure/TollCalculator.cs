@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TruckDelivery.Infrastructure
+﻿namespace TruckDelivery.Infrastructure
 {
     public class TollCalculator(IEnumerable<Delivery> deliveries, IEnumerable<Road> roads)
     {
@@ -17,25 +11,19 @@ namespace TruckDelivery.Infrastructure
                 var path = GetPossiblePaths(delivery.FromCityId, 1, []).First();
                 _knownPaths.TryAdd(delivery.FromCityId, path);
 
-                return path
-                    .Select((road) => delivery.LoadWeight >= road.LoadLimit ? road.TollCharge : 0)
-                    .Where((toll) => toll != 0);
-                }
-            );
+                return path.Where((road) => delivery.LoadWeight >= road.LoadLimit)
+                    .Select((road) => road.TollCharge);
+            });
         }
 
         private IEnumerable<IEnumerable<Road>> GetPossiblePaths(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
         {
             if (_knownPaths.TryGetValue(fromCity, out var path)) return [travelledRoads.Concat(path)];
 
-            if (fromCity == toCity) {
-                return [travelledRoads];
-            };
+            if (fromCity == toCity) return [travelledRoads];
 
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
             var untravelledRoads = connectedRoads.Where((road) => !travelledRoads.Contains(road));
-
-            if (!untravelledRoads.Any()) return [];
             
             return untravelledRoads.SelectMany((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
                 .Where((paths) => paths.Any());
