@@ -1,4 +1,6 @@
-﻿using TruckDelivery.Infrastructure;
+﻿using System.Diagnostics;
+using System.Text;
+using TruckDelivery.Infrastructure;
 
 namespace TruckDelivery
 {
@@ -6,6 +8,7 @@ namespace TruckDelivery
     {
         static void Main(string[] args)
         {
+            var timer = Stopwatch.StartNew();
             var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
             var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
             
@@ -15,7 +18,9 @@ namespace TruckDelivery
                 return;
             }
 
+            
             var failedScenarios = 0;
+            var builder = new StringBuilder();
 
             for (int i = 0; i < scenarios.Length; i++)
             {
@@ -26,15 +31,21 @@ namespace TruckDelivery
                 if (!expectedAnswer.IsMatch(computedAnswer))
                 {
                     failedScenarios++;
-                    Console.WriteLine($"Case #{i + 1}: No Match, expected {string.Join(" ", expectedAnswer.Values)} but computed {string.Join(" ", computedAnswer.Values)}");
+                    builder.AppendLine($"Case #{i + 1}: No Match, expected {string.Join(" ", expectedAnswer.Values)} but computed {string.Join(" ", computedAnswer.Values)}");
                 }
                 else
                 {
-                    Console.WriteLine($"Case #{i + 1}: {string.Join(" ", computedAnswer.Values)}");
+                    builder.AppendLine($"Case #{i + 1}: {string.Join(" ", computedAnswer.Values)}");
                 }
             }
 
+            Console.Write(builder.ToString());
+
             Console.WriteLine($"Total Failed Scenarios: {failedScenarios}");
+            Console.WriteLine($"Total Pass Scenarios: {scenarios.Length - failedScenarios}");
+            timer.Stop();
+            Console.WriteLine($"Execution Time: {timer.Elapsed}");
+            Console.ReadLine();
         }
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
