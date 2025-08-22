@@ -42,7 +42,7 @@ namespace TruckDelivery
             Console.Write(builder.ToString());
 
             Console.WriteLine($"Total Failed Scenarios: {failedScenarios}");
-            Console.WriteLine($"Total Pass Scenarios: {scenarios.Length - failedScenarios}");
+            Console.WriteLine($"Total Passed Scenarios: {scenarios.Length - failedScenarios}");
             timer.Stop();
             Console.WriteLine($"Execution Time: {timer.Elapsed}");
             Console.ReadLine();
