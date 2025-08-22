@@ -20,7 +20,7 @@ public class DeliveryCalculator
         {
             visited.Add(node);
 
-            tollDict[node] = currTolls.ToArray();
+            tollDict[node] = [..currTolls];
 
             foreach (var dest in map.GetConnected(node))
             {
@@ -34,7 +34,8 @@ public class DeliveryCalculator
                 FindTollsRecursive(dest, currTolls, visited);
             }
 
-            currTolls.RemoveAt(currTolls.Count - 1);
+            if (currTolls.Count > 0)
+                currTolls.RemoveAt(currTolls.Count - 1);
         }
 
         foreach (var (from, to, weight) in deliveries)

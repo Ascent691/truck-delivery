@@ -27,7 +27,6 @@ namespace TruckDelivery
                 var scenario = scenarios[i];
                 var expectedAnswer = expectedAnswers[i];
                 var computedAnswer = DetermineAnswer(scenario);
-                Console.WriteLine(i);
 
                 if (!expectedAnswer.IsMatch(computedAnswer))
                 {
