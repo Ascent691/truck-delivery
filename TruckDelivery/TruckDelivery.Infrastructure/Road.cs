@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace TruckDelivery.Infrastructure
 {
     [DebuggerDisplay($"{{{nameof(ToDebugString)}(),nq}}")]
-    public record Road(int FirstCityId, int SecondCityId, int TollCharge, int LoadLimit)
+    public record Road(long FirstCityId, long SecondCityId, long TollCharge, long LoadLimit)
     {
         private string ToDebugString()
         {

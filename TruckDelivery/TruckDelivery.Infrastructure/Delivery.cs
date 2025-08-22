@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 namespace TruckDelivery.Infrastructure
 {
     [DebuggerDisplay($"{{{nameof(ToDebugString)}(),nq}}")]
-    public record Delivery(int FromCityId, int ToCityId, int LoadWeight)
+    public record Delivery(long FromCityId, long ToCityId, long LoadWeight)
     {
         private string ToDebugString()
         {
-            return $"Delivery from {FromCityId} to {ToCityId} with a load weighing {LoadWeight}";
+            return $"Delivery from city {FromCityId} to city {ToCityId} with a load weighing {LoadWeight}";
         }
     }
 }

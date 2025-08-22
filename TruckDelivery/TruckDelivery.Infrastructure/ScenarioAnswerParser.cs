@@ -18,7 +18,7 @@ namespace TruckDelivery.Infrastructure
             {
                 int lineIndex = line.IndexOf(":") + 1;
                 var answers = line.Substring(lineIndex).Trim().Split(" ");
-                result.Add(new ScenarioAnswer(answers.Select(answer => int.Parse(answer)).ToArray()));
+                result.Add(new ScenarioAnswer(answers.Select(answer => long.Parse(answer)).ToArray()));
             }
 
             return result.ToArray();

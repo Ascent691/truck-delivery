@@ -2,11 +2,11 @@
 {
     public class ScenarioAnswer
     {
-        private readonly int[] _values;
+        private readonly long[] _values;
 
-        public int[] Values { get { return _values; } } // yeah I know...
+        public long[] Values { get { return _values; } } // yeah I know...
 
-        public ScenarioAnswer(int[] values)
+        public ScenarioAnswer(long[] values)
         {
             _values = values;
         }

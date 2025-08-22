@@ -13,17 +13,17 @@
             for (int i = 0; i < results.Length; i++)
             {
                 string[] parts = lines[lineIndex++].Split(' ');
-                int numRoads = int.Parse(parts[0]) - 1; // No idea why they made the schema N - 1
-                int numDeliveries = int.Parse(parts[1]);
+                var numRoads = int.Parse(parts[0]) - 1; // No idea why they made the schema N - 1
+                var numDeliveries = int.Parse(parts[1]);
                 var roads = new Road[numRoads];
 
                 for (int r = 0; r < roads.Length; r++)
                 {
                     parts = lines[lineIndex++].Split(' ');
-                    int firstCityId = int.Parse(parts[0]);
-                    int secondCityId = int.Parse(parts[1]);
-                    int loadLimit = int.Parse(parts[2]);
-                    int tollCharge = int.Parse(parts[3]);
+                    var firstCityId = long.Parse(parts[0]);
+                    var secondCityId = long.Parse(parts[1]);
+                    var loadLimit = long.Parse(parts[2]);
+                    var tollCharge = long.Parse(parts[3]);
                     roads[r] = new Road(firstCityId, secondCityId, tollCharge, loadLimit);
                 }
 
@@ -32,8 +32,8 @@
                 for (int d = 0; d < deliveries.Length; d++)
                 {
                     parts = lines[lineIndex++].Split(' ');
-                    int fromCityId = int.Parse(parts[0]);
-                    int loadWeight = int.Parse(parts[1]);
+                    var fromCityId = long.Parse(parts[0]);
+                    var loadWeight = long.Parse(parts[1]);
                     deliveries[d] = new Delivery(fromCityId, 1, loadWeight);
                 }
 
