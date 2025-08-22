@@ -24,7 +24,7 @@
                     var secondCityId = long.Parse(parts[1]);
                     var loadLimit = long.Parse(parts[2]);
                     var tollCharge = long.Parse(parts[3]);
-                    roads[r] = new Road(firstCityId, secondCityId, tollCharge, loadLimit);
+                    roads[r] = new Road(firstCityId, secondCityId, tollCharge, loadLimit, new RoadVisited());
                 }
 
                 var deliveries = new Delivery[numDeliveries];
