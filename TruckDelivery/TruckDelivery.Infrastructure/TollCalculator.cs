@@ -8,25 +8,28 @@
         {
             return deliveries.Select((delivery) => 
             {
-                var path = GetPossiblePaths(delivery.FromCityId, 1, []);
-                _knownPaths.TryAdd(delivery.FromCityId, path);
-
-                return path.Where((road) => delivery.LoadWeight >= road.LoadLimit)
+                return GetPathFromCity(delivery.FromCityId, 1, [])
+                    .Where((road) => delivery.LoadWeight >= road.LoadLimit)
                     .Select((road) => road.TollCharge);
             });
         }
 
-        private IEnumerable<Road> GetPossiblePaths(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
+        private IEnumerable<Road> GetPathFromCity(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
         {
-            if (_knownPaths.TryGetValue(fromCity, out var path)) return travelledRoads.Concat(path);
-
-            if (fromCity == toCity) return travelledRoads;
-
+            if (_knownPaths.TryGetValue(fromCity, out var knownPath)) return knownPath;
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
+            var desitinationRoad = connectedRoads.FirstOrDefault((road) => (road.FirstCityId == fromCity && road.SecondCityId == toCity) || (road.FirstCityId == toCity && road.SecondCityId == fromCity));
+            if (desitinationRoad != null) return [desitinationRoad];
+
             var untravelledRoads = connectedRoads.Where((road) => !travelledRoads.Contains(road));
-            
-            return untravelledRoads.Select((road) => GetPossiblePaths(GetDestination(fromCity, road), toCity, [..travelledRoads, road]))
-                .First((paths) => paths.Any());
+            return untravelledRoads.Select((road) => {
+                var path = GetPathFromCity(GetDestination(fromCity, road), toCity, [..travelledRoads, road]);
+                return path.Any() ?[..path, road]: path;
+            }).Select((path) =>
+            {
+                if (path.Any()) _knownPaths.TryAdd(fromCity, path);
+                return path;
+            }).First((path) => path.Any());
         }
 
         private long GetDestination(long fromCity, Road road)
