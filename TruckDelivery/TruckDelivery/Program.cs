@@ -11,8 +11,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -52,16 +52,18 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            // STEP 1: PATHFIND FROM START TO 1
-
-            // STEP 2: Store each paid toll
-
+            // STEP 1: PATHFIND FROM START TO 
+            // STEP 2: Store each paid 
             // STEP 3: FIND gcd for toll charges
             var dfs = new DFS();
             var cityPairs = GetCityPairs(scenario);
             var roads = scenario.Roads;
             const int CapitalCityId = 1;
             List<long> gcds = [];
+
+            // TODO: The order of the cities in the road should not matter. 
+            // When mapping, road cannot be found because it is looking for an exact match) => i.e., 7 1 is not 1 7 with the current logic.
+            // See mappedRoads
 
             foreach(var delivery in scenario.Deliveries)
             {
