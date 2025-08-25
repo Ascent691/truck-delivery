@@ -8,7 +8,7 @@ namespace TruckDelivery
 {
     internal class DFS
     {
-        public List<long>? FindPath(long start, long target, List<(long, long)> cityPairs)
+        public static List<long>? FindPath(long start, long target, List<(long, long)> cityPairs)
         {
             var adjacencies = BuildAdjacencies(cityPairs);
             var visited = new HashSet<long>();
@@ -39,7 +39,7 @@ namespace TruckDelivery
             return Dfs(start) ? path : null;
         }
 
-        private Dictionary<long, List<long>> BuildAdjacencies(List<(long, long)> pairs)
+        private static Dictionary<long, List<long>> BuildAdjacencies(List<(long, long)> pairs)
         {
             var adj = new Dictionary<long, List<long>>();
             foreach (var (a, b) in pairs)

@@ -11,8 +11,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -55,7 +55,6 @@ namespace TruckDelivery
             // STEP 1: PATHFIND FROM START TO 
             // STEP 2: Store each paid 
             // STEP 3: FIND gcd for toll charges
-            var dfs = new DFS();
             var cityPairs = GetCityPairs(scenario);
             var roads = scenario.Roads;
             const int CapitalCityId = 1;
@@ -69,14 +68,15 @@ namespace TruckDelivery
             {
                 List<long> tollsPaid = [];
                 var weight = delivery.LoadWeight;
-                var route = dfs.FindPath(delivery.FromCityId, CapitalCityId, cityPairs);
+                var route = DFS.FindPath(delivery.FromCityId, CapitalCityId, cityPairs);
 
                 if (route is null) continue;
 
                 var roadsInRoute = route.Zip(route.Skip(1), (city1, city2) => (city1, city2));
                 var roadLookup = roads.ToDictionary(r => (r.FirstCityId, r.SecondCityId));
                 var mappedRoads = roadsInRoute
-                                    .Select(r => (roadsInRoute: r, Road: roadLookup.TryGetValue(r, out var road) ? road : null))
+                                    .Select(r => (roadsInRoute: r, Road: roadLookup.GetValueOrDefault((r.city1, r.city2)) ?? roadLookup.GetValueOrDefault
+                                    ((r.city2, r.city1))))
                                     .ToList();
 
                 foreach (var mappedRoad in mappedRoads)
