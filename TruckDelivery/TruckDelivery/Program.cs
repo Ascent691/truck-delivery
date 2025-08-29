@@ -54,47 +54,59 @@ namespace TruckDelivery
         {
             var deliveries = scenario.Deliveries.ToList();
             var roads = scenario.Roads;
+
+            var roadNodes = new List<RouteNode<Road>>();
+            foreach (var road in roads)
+            {
+                roadNodes.Add(new RouteNode<Road>(road));
+            }
+            
             foreach (var delivery in deliveries)
             {
                 var availableRoads = roads.ToList();
                 var startingRoad = GetStartingRoad(delivery, availableRoads);
                 var routeRoot = new RouteNode<Road>(startingRoad);
-                SetNextRoad(routeRoot, availableRoads, delivery.ToCityId);
-                var getTotalTollCharges = GetTotalTollCharges(routeRoot, delivery.ToCityId);
-            }
-            
-            
-            // var tollTotals = new List<long>();
-            //
-            // foreach (var delivery in deliveries)
-            // {
-            //     var startingRoad = GetStartingRoad(delivery, roads);
-            //     var secondCityId = startingRoad.FirstCityId != delivery.FromCityId ? startingRoad.FirstCityId : startingRoad.SecondCityId;
-            //     var root = new RouteNode<Road>(startingRoad with
-            //     {
-            //         FirstCityId = delivery.FromCityId, SecondCityId = secondCityId
-            //     });
-            //     RouteNode<Road> nextRoad = root;
-            //     var availableRoads = roads.ToList();
-            //     availableRoads.Remove(root.Value!);
-            //     for (int i = 0; i < availableRoads.Count - 1; i++)
-            //     {
-            //         var road = availableRoads[i];
-            //         if(road.FirstCityId != nextRoad.Value!.SecondCityId && road.SecondCityId != nextRoad.Value!.SecondCityId) continue;
-            //         var nextSecondCityId = road.FirstCityId != delivery.FromCityId ? road.FirstCityId : road.SecondCityId;
-            //         nextRoad.AddChild(road with
-            //         {
-            //             FirstCityId = nextRoad.Value!.SecondCityId,
-            //             SecondCityId = nextSecondCityId
-            //         });
-            //         nextRoad = root.Children.First();
-            //         availableRoads.Remove(road);
-            //         break;
-            //     }
-            // }
 
+                var visited = new HashSet<Road>();
+                CreateRouteTree(routeRoot, roadNodes, visited);
+
+                var path = GetPath(routeRoot, delivery.FromCityId, delivery.ToCityId);
+
+            }
             throw new NotImplementedException(
                 "Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+        }
+
+        private static void CreateRouteTree(
+            RouteNode<Road> currentNode,
+            List<RouteNode<Road>> availableRoads,
+            HashSet<Road> visited)
+        {
+            visited.Add(currentNode.Value);
+
+            var currentRoad = currentNode.Value;
+            var connectedCities = new[] { currentRoad.FirstCityId, currentRoad.SecondCityId };
+
+            foreach (var city in connectedCities)
+            {
+                var nextRoads = availableRoads
+                    .Where(roadNode =>
+                        !visited.Contains(roadNode.Value) &&
+                        (roadNode.Value.FirstCityId == city || roadNode.Value.SecondCityId == city))
+                    .ToList();
+                if(nextRoads.Count <= 0) continue;
+
+                foreach (var nextRoad in nextRoads)
+                {
+                    var childNode = new RouteNode<Road>(nextRoad.Value)
+                    {
+                        Parent = currentNode
+                    };
+                    currentNode.AddChild(childNode);
+
+                    CreateRouteTree(childNode, availableRoads, visited);
+                }
+            }
         }
 
         private static Road GetStartingRoad(Delivery delivery, List<Road> roads)
@@ -102,65 +114,60 @@ namespace TruckDelivery
             return roads.First(road => road.FirstCityId == delivery.FromCityId || road.SecondCityId == delivery.FromCityId);
         }
         
-        private static void SetNextRoad(RouteNode<Road> nextRoad, List<Road> roads, long endingCityId)
+        private static long GetTotalTollCharges(RouteNode<Road> root)
         {
-            foreach (var road in roads)
-            {
-                if(road.RoadVisited.Visited) continue;
-                if (road.FirstCityId == nextRoad.Value.SecondCityId)
-                {
-                    road.RoadVisited.Visited = true;
-                    nextRoad.AddChild(road with
-                    {
-                        FirstCityId = road.FirstCityId,
-                        SecondCityId = road.SecondCityId
-                    });
-                } 
-                else if (road.SecondCityId == nextRoad.Value.SecondCityId)
-                {
-                    road.RoadVisited.Visited = true;
-                    nextRoad.AddChild(road with
-                    {
-                        FirstCityId = nextRoad.Value.SecondCityId,
-                        SecondCityId = road.FirstCityId
-                    });
-                }
-            }
-            
-            if(nextRoad.Children.Count == 0) return;
-            foreach (var child in nextRoad.Children)
-            {
-                SetNextRoad(child, roads, endingCityId);
-            }
-        }
-
-        private static long GetTotalTollCharges(RouteNode<Road> root, long endingCityId)
-        {
-            var path = root.Children;
             return 0L;
         }
-    }
-}
-
-public class RouteNode<T>
-{
-    public T Value { get; set; }
-    public RouteNode<T> Parent { get; set; }
-    public List<RouteNode<T>> Children { get; set; }
-
-    public RouteNode(T value)
-    {
-        Value = value;
-        Children = new List<RouteNode<T>>();
-    }
-
-    public RouteNode<T> AddChild(T child)
-    {
-        var childNode = new RouteNode<T>(child)
+        
+        private static List<long> GetPath(RouteNode<Road> root, long startCity, long targetCity)
         {
-            Parent = this
-        };
-        Children.Add(childNode);
-        return childNode;
+            var path = new List<long>();
+            var visited = new HashSet<RouteNode<Road>>();
+
+            if (FindPathDFS(root, startCity, targetCity, visited, path))
+                return path;
+
+            return new List<long>();
+        }
+
+        
+        private static bool FindPathDFS(
+            RouteNode<Road> currentNode,
+            long currentCity,
+            long targetCity,
+            HashSet<RouteNode<Road>> visited,
+            List<long> path)
+        {
+            path.Add(currentCity);
+
+            if (currentCity == targetCity)
+                return true;
+
+            visited.Add(currentNode);
+
+            var connectedCities = new[] { currentNode.Value.FirstCityId, currentNode.Value.SecondCityId };
+
+            foreach (var nextCity in connectedCities)
+            {
+                if (nextCity == currentCity)
+                    continue;
+
+                foreach (var child in currentNode.Children)
+                {
+                    if (!visited.Contains(child) &&
+                        (child.Value.FirstCityId == nextCity || child.Value.SecondCityId == nextCity))
+                    {
+                        if (FindPathDFS(child, nextCity, targetCity, visited, path))
+                            return true;
+                    }
+                }
+            }
+
+            path.RemoveAt(path.Count - 1);
+            return false;
+        }
+
     }
 }
+
+
