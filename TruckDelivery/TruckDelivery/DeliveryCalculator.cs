@@ -9,17 +9,16 @@ public class DeliveryCalculator
         var adjList = new RoadAdjacencyList(scenario.Roads);
 
         var answers = new long[scenario.Deliveries.Length];
-        var currAns = 0;
 
-        var pathMap = new Dictionary<long, Road[]>();
+        var pathMap = new Dictionary<long, List<Road>>();
         var visited = new bool[scenario.Roads.Length + 2];
 
-        FindPathsRecursive(1, [], visited);
+        FindPathsRecursive(1, []);
 
-        void FindPathsRecursive(long node, List<Road> currPath, bool[] visited)
+        void FindPathsRecursive(long node, List<Road> currPath)
         {
             visited[node] = true;
-            pathMap[node] = [.. currPath];
+            pathMap[node] = [..currPath];
 
             foreach (var (dest, road) in adjList.GetConnectedNodes(node))
             {
@@ -27,23 +26,23 @@ public class DeliveryCalculator
 
                 currPath.Add(road);
 
-                FindPathsRecursive(dest, currPath, visited);
+                FindPathsRecursive(dest, currPath);
             }
 
             if (currPath.Count > 0)
                 currPath.RemoveAt(currPath.Count - 1);
         }
 
-        foreach (var (from, to, weight) in scenario.Deliveries)
+        Parallel.ForEach(scenario.Deliveries, (delivery, _, i) =>
         {
             long divisor = 0;
-            foreach (var r in pathMap[from])
+            foreach (var r in pathMap[delivery.FromCityId])
             {
-                var toll = weight >= r.LoadLimit ? r.TollCharge : 0;
+                var toll = delivery.LoadWeight >= r.LoadLimit ? r.TollCharge : 0;
                 divisor = MathHelper.GreatestCommonDivisor(divisor, toll);
             }
-            answers[currAns++] = divisor;
-        }
+            answers[i] = divisor;
+        });
 
         return new ScenarioAnswer(answers);
     }
