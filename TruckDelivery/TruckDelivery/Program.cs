@@ -47,10 +47,65 @@ namespace TruckDelivery
             Console.WriteLine($"Execution Time: {timer.Elapsed}");
             Console.ReadLine();
         }
-
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            var allRoads = scenario.Roads.ToList();
+
+            foreach (var delivery in scenario.Deliveries)
+            {
+                var tollsForThisDelivery = new List<long>();
+                var visitedCities = new HashSet<long>();
+
+                long currentCity = delivery.FromCityId;
+                long destination = delivery.ToCityId;
+                long deliveryWeight = delivery.LoadWeight;
+
+                visitedCities.Add(currentCity);
+
+                while (currentCity != destination)
+                {
+                    bool foundNextRoad = false;
+                    foreach (var road in allRoads)
+                    {
+                        long nextCity = -1;
+
+                        if (road.FirstCityId == currentCity && !visitedCities.Contains(road.SecondCityId))
+                        {
+                            nextCity = road.SecondCityId;
+                        }
+                        else if (road.SecondCityId == currentCity && !visitedCities.Contains(road.FirstCityId))
+                        {
+                            nextCity = road.FirstCityId;
+                        }
+
+                        if (nextCity != -1)
+                        {
+                            if (deliveryWeight > road.LoadLimit)
+                            {
+                                tollsForThisDelivery.Add(road.TollCharge);
+                            }
+
+                            currentCity = nextCity;
+                            visitedCities.Add(currentCity);
+                            foundNextRoad = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundNextRoad)
+                    {
+                        break;
+                    }
+                }
+
+                long dailyGcd = 0;
+                if (tollsForThisDelivery.Count > 0)
+                {
+                    dailyGcd = MathHelper.GreatestCommonDivisor(tollsForThisDelivery.ToArray());
+                }
+                Console.WriteLine(dailyGcd);
+            }
+            return null;
         }
     }
 }
