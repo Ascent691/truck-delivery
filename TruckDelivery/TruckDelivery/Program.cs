@@ -50,7 +50,72 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            var results = new List<long>();
+
+            foreach (var delivery in scenario.Deliveries)
+            {
+                var pathRoads = FindPathRoads(scenario.Roads, delivery.FromCityId, delivery.ToCityId);
+
+                var tollCharges = new List<long>();
+
+                foreach (var road in pathRoads)
+                {
+                    if (delivery.LoadWeight >= road.LoadLimit)
+                    {
+                        tollCharges.Add(road.TollCharge);
+                    }
+                }
+
+                long gcd = tollCharges.Count == 0 ? 0 : MathHelper.GreatestCommonDivisor(tollCharges.ToArray());
+                results.Add(gcd);
+            }
+
+            return new ScenarioAnswer(results.ToArray());
         }
+
+        private static List<Road> FindPathRoads(Road[] roads, long start, long end)
+        {
+            if (start == end) return new List<Road>();
+
+            var queue = new Queue<(long city, List<Road> pathRoads)>();
+            var visited = new HashSet<long>();
+
+            queue.Enqueue((start, new List<Road>()));
+            visited.Add(start);
+
+            while (queue.Count > 0)
+            {
+                var (currentCity, currentPath) = queue.Dequeue();
+
+                foreach (var road in roads)
+                {
+                    long nextCity = -1;
+
+                    if (road.FirstCityId == currentCity && !visited.Contains(road.SecondCityId))
+                    {
+                        nextCity = road.SecondCityId;
+                    }
+                    else if (road.SecondCityId == currentCity && !visited.Contains(road.FirstCityId))
+                    {
+                        nextCity = road.FirstCityId;
+                    }
+
+                    if (nextCity != -1)
+                    {
+                        var newPath = new List<Road>(currentPath) { road };
+
+                        if (nextCity == end)
+                        {
+                            return newPath;
+                        }
+
+                        visited.Add(nextCity);
+                        queue.Enqueue((nextCity, newPath));
+                    }
+                }
+            }
+            return new List<Road>(); 
+        }
+
     }
 }
