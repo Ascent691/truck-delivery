@@ -11,14 +11,14 @@ namespace TruckDelivery
             var timer = Stopwatch.StartNew();
             var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
             var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
-            
+
             if (scenarios.Length != expectedAnswers.Length)
             {
                 Console.WriteLine("We have a different number of answers compared to questions, are you using the right combination of scenarios and answers files?");
                 return;
             }
 
-            
+
             var failedScenarios = 0;
             var builder = new StringBuilder();
 
@@ -50,7 +50,79 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            throw new NotImplementedException("Please implement me, remember to convert the toll charges to greatest common divisors (Use MathHelper unless your brave) :)");
+            // Figure out how many cities there are.
+            // We look at all roads and take the biggest city number we see.
+            int biggestCityId = scenario.Roads.Max(
+                road => (int)Math.Max(road.FirstCityId, road.SecondCityId)
+            );
+
+            // Make a map of cities.
+            // Each city will have a list of roads leaving it.
+            var map = new List<(int toCity, long weightLimit, long toll)>[biggestCityId + 1];
+            for (int i = 0; i <= biggestCityId; i++)
+                map[i] = new List<(int, long, long)>();
+
+            // Fill the map with all roads (both directions)
+            foreach (var road in scenario.Roads)
+            {
+                map[(int)road.FirstCityId].Add(((int)road.SecondCityId, road.LoadLimit, road.TollCharge));
+                map[(int)road.SecondCityId].Add(((int)road.FirstCityId, road.LoadLimit, road.TollCharge));
+            }
+
+            // Prepare to explore the map
+            int[] parent = new int[biggestCityId + 1];   // Who is the parent city
+            long[] roadLimit = new long[biggestCityId + 1]; // Weight limit of road to parent
+            long[] roadToll = new long[biggestCityId + 1];  // Toll of road to parent
+            bool[] visited = new bool[biggestCityId + 1];   // Have we visited this city yet?
+
+            // Explore the cities using DFS (Depth-First Search)
+            // We start at city 1 and mark all roads leading to children
+            void Explore(int city, int parentCity)
+            {
+                visited[city] = true;    // Mark city as visited
+                parent[city] = parentCity; // Remember who the parent is
+
+                // Look at all roads leaving this city
+                foreach (var (nextCity, limit, toll) in map[city])
+                {
+                    if (!visited[nextCity])
+                    {
+                        // Record info about the road to the next city
+                        roadLimit[nextCity] = limit;
+                        roadToll[nextCity] = toll;
+
+                        // Keep exploring from the next city
+                        Explore(nextCity, city);
+                    }
+                }
+            }
+
+            // Start DFS from city 1 (the root city)
+            Explore(1, 0);
+
+            // Answer each delivery
+            var answers = new long[scenario.Deliveries.Length];
+
+            //TODO - Need to loop through each delivery request and compute the answers
+
+            // Return all answers for this scenario
+            return new ScenarioAnswer(answers);
         }
+
+
+
     }
 }
+
+//Diagram of the sample input
+
+//         1
+//        / \
+//  (2,4)/   \(5,7)
+//      2       7
+//     /|\
+// (1,5)  (7,8)
+//   6     3
+//         |\
+//      (6,2) (9,9)
+//         4   5
