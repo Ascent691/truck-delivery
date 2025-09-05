@@ -9,8 +9,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
             
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -50,10 +50,11 @@ namespace TruckDelivery
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
             var allRoads = scenario.Roads.ToList();
+            var finalGcdValues = new List<long>();
 
             foreach (var delivery in scenario.Deliveries)
             {
-                var tollsForThisDelivery = new List<long>();
+                var tollsForThisDelivery = new HashSet<long>();
                 var visitedCities = new HashSet<long>();
 
                 long currentCity = delivery.FromCityId;
@@ -80,7 +81,7 @@ namespace TruckDelivery
 
                         if (nextCity != -1)
                         {
-                            if (deliveryWeight > road.LoadLimit)
+                            if (deliveryWeight >= road.LoadLimit)
                             {
                                 tollsForThisDelivery.Add(road.TollCharge);
                             }
@@ -103,9 +104,9 @@ namespace TruckDelivery
                 {
                     dailyGcd = MathHelper.GreatestCommonDivisor(tollsForThisDelivery.ToArray());
                 }
-                Console.WriteLine(dailyGcd);
+                finalGcdValues.Add(dailyGcd);
             }
-            return null;
+            return new ScenarioAnswer(finalGcdValues.ToArray());
         }
     }
 }
