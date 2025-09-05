@@ -47,7 +47,7 @@ namespace TruckDelivery
             Console.WriteLine($"Execution Time: {timer.Elapsed}");
             Console.ReadLine();
         }
-        private static ScenarioAnswer DetermineAnswer(Scenario scenario)
+        private static ScenarioAnswer DetermineAnswerOld(Scenario scenario)
         {
             var allRoads = scenario.Roads.ToList();
             var finalGcdValues = new List<long>();
@@ -108,5 +108,76 @@ namespace TruckDelivery
             }
             return new ScenarioAnswer(finalGcdValues.ToArray());
         }
+
+        private static ScenarioAnswer DetermineAnswer(Scenario scenario)
+        {
+            var adjacency = new Dictionary<long, List<Road>>();
+            foreach (var road in scenario.Roads)
+            {
+                if (!adjacency.ContainsKey(road.FirstCityId))
+                    adjacency[road.FirstCityId] = new List<Road>();
+                if (!adjacency.ContainsKey(road.SecondCityId))
+                    adjacency[road.SecondCityId] = new List<Road>();
+
+                adjacency[road.FirstCityId].Add(road);
+                adjacency[road.SecondCityId].Add(road);
+            }
+
+            var finalGcdValues = new List<long>();
+
+            foreach (var delivery in scenario.Deliveries)
+            {
+                var tollsForThisDelivery = new HashSet<long>();
+                var visitedCities = new HashSet<long>();
+
+                long currentCity = delivery.FromCityId;
+                long destination = delivery.ToCityId;
+                long deliveryWeight = delivery.LoadWeight;
+
+                visitedCities.Add(currentCity);
+
+                while (currentCity != destination)
+                {
+                    bool foundNextRoad = false;
+
+                    foreach (var road in adjacency[currentCity])
+                    {
+                        long nextCity = -1;
+
+                        if (road.FirstCityId == currentCity && !visitedCities.Contains(road.SecondCityId))
+                        {
+                            nextCity = road.SecondCityId;
+                        }
+                        else if (road.SecondCityId == currentCity && !visitedCities.Contains(road.FirstCityId))
+                        {
+                            nextCity = road.FirstCityId;
+                        }
+
+                        if (nextCity != -1)
+                        {
+                            if (deliveryWeight >= road.LoadLimit)
+                                tollsForThisDelivery.Add(road.TollCharge);
+
+                            currentCity = nextCity;
+                            visitedCities.Add(currentCity);
+                            foundNextRoad = true;
+                            break; 
+                        }
+                    }
+
+                    if (!foundNextRoad)
+                        break;
+                }
+
+                long dailyGcd = tollsForThisDelivery.Count > 0
+                    ? MathHelper.GreatestCommonDivisor(tollsForThisDelivery.ToArray())
+                    : 0;
+
+                finalGcdValues.Add(dailyGcd);
+            }
+
+            return new ScenarioAnswer(finalGcdValues.ToArray());
+        }
+
     }
 }
