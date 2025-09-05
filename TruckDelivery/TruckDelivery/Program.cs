@@ -9,8 +9,8 @@ namespace TruckDelivery
         static void Main(string[] args)
         {
             var timer = Stopwatch.StartNew();
-            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("simple.in"));
-            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("simple.ans"));
+            var scenarios = new ScenarioParser().Parse(File.ReadAllLines("1.in"));
+            var expectedAnswers = new ScenarioAnswerParser().Parse(File.ReadAllLines("1.ans"));
 
             if (scenarios.Length != expectedAnswers.Length)
             {
@@ -103,14 +103,32 @@ namespace TruckDelivery
             // Answer each delivery
             var answers = new long[scenario.Deliveries.Length];
 
-            //TODO - Need to loop through each delivery request and compute the answers
+            for (int i = 0; i < scenario.Deliveries.Length; i++)
+            {
+                var delivery = scenario.Deliveries[i];
+                int from = (int)delivery.FromCityId;
+                long load = delivery.LoadWeight;
+
+                // Collect all tolls along the path to city 1
+                var tollsOnPath = new List<long>();
+
+                while (from != 1) // Keep moving toward city 1
+                {
+                    if (roadLimit[from] <= load)   // Can the truck travel this road?
+                        tollsOnPath.Add(roadToll[from]); // If yes, pay the toll
+
+                    from = parent[from]; // Move one step closer to city 1
+                }
+
+                // Find the biggest number that divides all tolls (GCD)
+                answers[i] = tollsOnPath.Count > 0
+                    ? MathHelper.GreatestCommonDivisor(tollsOnPath.ToArray())
+                    : 0; // If no tolls, answer is 0
+            }
 
             // Return all answers for this scenario
             return new ScenarioAnswer(answers);
         }
-
-
-
     }
 }
 
