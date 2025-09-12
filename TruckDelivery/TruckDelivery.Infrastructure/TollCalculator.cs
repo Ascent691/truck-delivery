@@ -14,11 +14,11 @@
             });
         }
 
-        private IEnumerable<Road> GetPathFromCity(long fromCity, long toCity, IEnumerable<Road> travelledRoads)
+        private IEnumerable<Road> GetPathFromCity(long fromCity, long toCity, HashSet<Road> travelledRoads)
         {
             if (_knownPaths.TryGetValue(fromCity, out var knownPath)) return knownPath;
             var connectedRoads = roads.Where((road) => road.FirstCityId == fromCity || road.SecondCityId == fromCity);
-            var desitinationRoad = connectedRoads.FirstOrDefault((road) => (road.FirstCityId == fromCity && road.SecondCityId == toCity) || (road.FirstCityId == toCity && road.SecondCityId == fromCity));
+            var desitinationRoad = connectedRoads.FirstOrDefault((road) => road.SecondCityId == toCity || road.FirstCityId == toCity);
             if (desitinationRoad != null) return [desitinationRoad];
 
             var untravelledRoads = connectedRoads.Where((road) => !travelledRoads.Contains(road));

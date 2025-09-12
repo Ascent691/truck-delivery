@@ -50,11 +50,15 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            var calculator = new TollCalculator(scenario.Deliveries, scenario.Roads);
+            var calculator = new BetterTollCalculator(scenario.Roads);
 
-            var answers = calculator.GetTollsToHomeCity().Select((tolls) => MathHelper.GreatestCommonDivisor(tolls.ToArray()));
+            var answers = new long[scenario.Deliveries.Length];
+            Parallel.ForEach(scenario.Deliveries, (delivery, _, i) => {
+                var tolls = calculator.GetTolls(delivery);
+                answers[i] = MathHelper.GreatestCommonDivisor(tolls.ToArray());
+            });
 
-            return new ScenarioAnswer(answers.ToArray());
+            return new ScenarioAnswer(answers);
         }
     }
 }
