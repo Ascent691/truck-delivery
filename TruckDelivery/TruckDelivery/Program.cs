@@ -52,17 +52,10 @@ namespace TruckDelivery
 
         private static ScenarioAnswer DetermineAnswer(Scenario scenario)
         {
-            // STEP 1: PATHFIND FROM START TO 
-            // STEP 2: Store each paid 
-            // STEP 3: FIND gcd for toll charges
             var cityPairs = GetCityPairs(scenario);
             var roads = scenario.Roads;
             const int CapitalCityId = 1;
             List<long> gcds = [];
-
-            // TODO: The order of the cities in the road should not matter. 
-            // When mapping, road cannot be found because it is looking for an exact match) => i.e., 7 1 is not 1 7 with the current logic.
-            // See mappedRoads
 
             foreach(var delivery in scenario.Deliveries)
             {
