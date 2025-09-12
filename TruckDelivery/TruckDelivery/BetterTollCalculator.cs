@@ -12,12 +12,10 @@ namespace TruckDelivery
 {
     public class BetterTollCalculator
     {
-        private readonly IEnumerable<Road> _roads;
         private readonly Dictionary<long, List<Road>> _pathsToHome;
         public BetterTollCalculator(IEnumerable<Road> roads)
         {
-            _roads = roads;
-            _pathsToHome = ScanForPaths();
+            _pathsToHome = ScanForPaths(roads);
         }
 
         public IEnumerable<long> GetTolls(Delivery delivery)
@@ -27,32 +25,31 @@ namespace TruckDelivery
                     .Select((road) => road.TollCharge);
         }
 
-        private Dictionary<long, List<Road>> ScanForPaths()
+        private Dictionary<long, List<Road>> ScanForPaths(IEnumerable<Road> roads)
         {
-            var scanned = new HashSet<Road>();
-            var chains = new List<Chain>();
-            var queue = new Queue<Chain>();
-
-            queue.Enqueue(new Chain(1, []));
+            var result = new Dictionary<long, List<Road>>();
+            var untravelledRoads = new List<Road>(roads);
+            var queue = new List<Chain>() { new (1, []) };
 
             while (queue.Count > 0)
             {
-                var chain = queue.Dequeue();
-
-                var toScan = _roads
-                    .Where((x) => x.FirstCityId == chain.Tail || x.SecondCityId == chain.Tail)
-                    .Where((x) => !scanned.Contains(x));
-
-                foreach (var road in toScan)
+                foreach (var chain in queue.ToArray())
                 {
-                    var newChain = new Chain(GetDestination(chain.Tail, road), [..chain.Roads, road]);
-                    queue.Enqueue(newChain);
-                    scanned.Add(road);
-                    chains.Add(newChain);
+                    var toTravel = untravelledRoads.Where((x) => x.FirstCityId == chain.Tail || x.SecondCityId == chain.Tail).ToArray();
+
+                    foreach (var road in toTravel)
+                    {
+                        untravelledRoads.Remove(road);
+                        var newChain = new Chain(GetDestination(chain.Tail, road), [.. chain.Roads, road]);
+                        queue.Add(newChain);
+                        result.Add(newChain.Tail, newChain.Roads);
+                    }
+
+                    queue.Remove(chain);
                 }
             }
 
-            return chains.ToDictionary((chain) => chain.Tail, (chain) => chain.Roads);
+            return result;
         }
 
         private static long GetDestination(long fromCity, Road road)
